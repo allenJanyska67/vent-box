@@ -5,15 +5,12 @@ description = "Structural Therapy app scaffolded with uv, Streamlit, and LangGra
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "streamlit>=1.36",
-    "langgraph>=0.2",
+    "streamlit",
+    "langgraph",
 ]
 
 [tool.uv]
-# Treat this as an application (no packaging/build backend required)
-package = false
 dev-dependencies = [
     "pytest>=8",
     "ruff>=0.5",
 ]
-
