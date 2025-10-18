@@ -4,8 +4,8 @@ from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 from graph.main import graph
 
 
-st.set_page_config(page_title="Structural Therapy Chat", page_icon="💬")
-st.title("Structural Therapy Chat")
+st.set_page_config(page_title="Chat", page_icon="💬")
+st.title("Chat")
 st.caption("Powered by LangGraph + OpenAI (gpt-5-mini)")
 
 

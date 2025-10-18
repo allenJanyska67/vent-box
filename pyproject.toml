@@ -1,7 +1,7 @@
 [project]
-name = "structural-therapy"
+name = "chatbot-base"
 version = "0.1.0"
-description = "Structural Therapy app scaffolded with uv, Streamlit, and LangGraph"
+description = "A blank canvas for building chatbots with langgraph"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
