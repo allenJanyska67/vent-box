@@ -19,12 +19,10 @@ class ChatState(TypedDict):
 llm = ChatOpenAI(model="gpt-5-mini", streaming=True).with_config({"tags": ["output"]})
 
 
-# Runnable that takes state["messages"] -> ChatOpenAI -> {"messages": [AIMessage]}
-def _wrap(ai_msg):
+def chain(state: ChatState) -> ChatState:
+    messages = state["messages"]
+    ai_msg = llm.invoke(messages)
     return {"messages": [ai_msg]}
-
-
-chain = itemgetter("messages") | llm | RunnableLambda(_wrap)
 
 
 def build_graph():
