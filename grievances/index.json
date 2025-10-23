@@ -41,6 +41,20 @@
       "occurrences": 1,
       "highest_level": 4,
       "ticket_path": ""
+    },
+    "ai-codebase-stress": {
+      "summary": "Employee is experiencing significant stress due to the use of AI in the codebase.",
+      "next_steps": "Schedule a meeting to discuss specific concerns and explore possible adjustments or support.",
+      "grievances": [
+        {
+          "file": "grievances/20251023-200053-level5.md",
+          "level": 5,
+          "message": "I am frustrated with the use of AI in this codebase. It causes me significant stress."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 5,
+      "ticket_path": ""
     }
   }
 }
