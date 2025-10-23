@@ -18,10 +18,17 @@ class ChatState(TypedDict, total=False):
     response: str
     attempts: int
     next_action: str
+    summary: str
+    topic_key: str
+    occurrences: int
+    ticket_path: str
+    next_steps: str
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 GRIEVANCE_DIR = PROJECT_ROOT / "grievances"
+TICKETS_DIR = GRIEVANCE_DIR / "tickets"
+INDEX_PATH = GRIEVANCE_DIR / "index.json"
 MAX_SANITIZE_ATTEMPTS = 1
 
 # Dedicated moderation model; streaming unnecessary for this workflow.
@@ -32,6 +39,56 @@ moderation_llm = ChatOpenAI(model="gpt-4.1", temperature=0).with_config(
 sanitize_llm = ChatOpenAI(model="gpt-4.1", temperature=0).with_config(
     {"tags": ["sanitize"]}
 )
+
+analysis_llm = ChatOpenAI(model="gpt-4.1", temperature=0).with_config(
+    {"tags": ["analysis"]}
+)
+
+
+def normalize_topic_key(value: str) -> str:
+    cleaned = "".join(ch.lower() if ch.isalnum() else "-" for ch in value)
+    slug = "-".join(part for part in cleaned.split("-") if part)
+    return slug or "general-issue"
+
+
+def render_ticket_content(topic_key: str, entry: Dict[str, Any]) -> str:
+    summary = entry.get("summary", "").strip() or "Summary pending."
+    next_steps = entry.get("next_steps", "").strip()
+    occurrences = entry.get("occurrences", 0)
+    highest_level = entry.get("highest_level", 0)
+    grievances = entry.get("grievances", [])
+
+    lines = [
+        f"# Ticket: {topic_key}",
+        "",
+        f"- Summary: {summary}",
+        f"- Occurrences: {occurrences}",
+        f"- Highest Level: {highest_level}",
+        "",
+    ]
+
+    if next_steps:
+        lines.extend(["## Next Steps", next_steps, ""])
+
+    lines.append("## Related Grievances")
+    if grievances:
+        for item in grievances:
+            file_ref = item.get("file", "unknown")
+            level = item.get("level", "n/a")
+            lines.append(f"- Level {level} → `{file_ref}`")
+    else:
+        lines.append("- None recorded yet.")
+
+    lines.extend(["", "## Recent Notes"])
+    if grievances:
+        for item in grievances[-5:]:
+            note = item.get("message", "").strip() or "*No message provided.*"
+            lines.append(f"- {note}")
+    else:
+        lines.append("- No additional context captured.")
+
+    lines.append("")
+    return "\n".join(lines)
 
 
 def moderate_grievance(state: ChatState) -> ChatState:
@@ -171,6 +228,65 @@ def sanitize_grievance(state: ChatState) -> ChatState:
     }
 
 
+def summarize_grievance(state: ChatState) -> ChatState:
+    request = state.get("request") or {}
+    level = request.get("level", 1)
+    sanitized = state.get("sanitized_message") or request.get("message", "")
+    sanitized = (sanitized or "").strip()
+
+    payload = {
+        "message": sanitized,
+        "level": level,
+    }
+    prompt = (
+        "Summarize the following grievance for a tracking index. "
+        "Return JSON with keys:\n"
+        '- "summary": concise sentence (<25 words) capturing the core issue\n'
+        '- "topic_key": lowercase slug (letters, numbers, hyphens) suitable as an identifier\n'
+        '- "next_steps": short recommended follow-up action (single sentence)\n'
+        "Only return JSON."
+    )
+
+    llm_response = analysis_llm.invoke(
+        [
+            SystemMessage(content=prompt),
+            HumanMessage(content=json.dumps(payload)),
+        ]
+    )
+
+    content = llm_response.content
+    if isinstance(content, list):
+        content = "".join(str(part) for part in content if part is not None)
+
+    summary = ""
+    topic_key = ""
+    next_steps = ""
+    if isinstance(content, str):
+        try:
+            parsed = json.loads(content)
+            summary = str(parsed.get("summary", "")).strip()
+            topic_key = str(parsed.get("topic_key", "")).strip()
+            next_steps = str(parsed.get("next_steps", "")).strip()
+        except json.JSONDecodeError:
+            summary = ""
+
+    summary = summary or (sanitized[:120] + ("…" if len(sanitized) > 120 else ""))
+    topic_key = normalize_topic_key(topic_key or summary)
+    next_steps = next_steps or "Review and prioritise with the project owner."
+
+    existing = state.get("response")
+    response_lines = [existing] if existing else []
+    response_lines.append(f"Summary: {summary}")
+    response_lines.append(f"Topic key: {topic_key}")
+
+    return {
+        "summary": summary,
+        "topic_key": topic_key,
+        "next_steps": next_steps,
+        "response": "\n".join(response_lines),
+    }
+
+
 @tool
 def save_grievance_tool(level: int, sanitized_message: str) -> str:
     """
@@ -197,6 +313,88 @@ def save_grievance_tool(level: int, sanitized_message: str) -> str:
 
     relative_path = file_path.relative_to(PROJECT_ROOT)
     return str(relative_path)
+
+
+def catalog_grievance(state: ChatState) -> ChatState:
+    request = state.get("request") or {}
+    level = int(request.get("level", 1))
+    sanitized = state.get("sanitized_message") or request.get("message", "")
+    sanitized = sanitized.strip() or "*Content redacted for policy compliance.*"
+    summary = state.get("summary", "").strip()
+    topic_key = state.get("topic_key", "general-issue").strip()
+    topic_key = normalize_topic_key(topic_key)
+    next_steps = state.get("next_steps", "").strip()
+    storage_path = state.get("storage_path", "")
+
+    index_data: Dict[str, Any] = {"topics": {}}
+    if INDEX_PATH.exists():
+        try:
+            with INDEX_PATH.open("r", encoding="utf-8") as fh:
+                index_data = json.load(fh) or {"topics": {}}
+        except (json.JSONDecodeError, OSError):
+            index_data = {"topics": {}}
+
+    topics = index_data.setdefault("topics", {})
+    entry = topics.get(topic_key, {})
+
+    grievances = entry.get("grievances", [])
+    if storage_path and not any(item.get("file") == storage_path for item in grievances):
+        grievances.append(
+            {
+                "file": storage_path,
+                "level": level,
+                "message": sanitized,
+            }
+        )
+
+    occurrences = len(grievances)
+    highest_level = max([level] + [item.get("level", 0) for item in grievances])
+
+    entry.update(
+        {
+            "summary": summary,
+            "next_steps": next_steps,
+            "grievances": grievances,
+            "occurrences": occurrences,
+            "highest_level": highest_level,
+        }
+    )
+
+    ticket_path = entry.get("ticket_path", "")
+    TICKETS_DIR.mkdir(parents=True, exist_ok=True)
+
+    if occurrences >= 2:
+        ticket_filename = f"{topic_key}.md"
+        ticket_file = TICKETS_DIR / ticket_filename
+        ticket_content = render_ticket_content(topic_key, entry)
+        ticket_file.write_text(ticket_content, encoding="utf-8")
+        ticket_path = str(ticket_file.relative_to(PROJECT_ROOT))
+        entry["ticket_path"] = ticket_path
+    else:
+        entry.setdefault("ticket_path", "")
+
+    topics[topic_key] = entry
+
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with INDEX_PATH.open("w", encoding="utf-8") as fh:
+        json.dump(index_data, fh, indent=2, ensure_ascii=False)
+
+    response_lines = []
+    if state.get("response"):
+        response_lines.append(state["response"])
+    response_lines.append(f"Occurrences for {topic_key}: {occurrences}")
+    if occurrences >= 2:
+        response_lines.append(f"Recurring issue tracked at `{ticket_path}`.")
+    else:
+        response_lines.append("First report logged; monitoring for recurrence.")
+    if next_steps:
+        response_lines.append(f"Suggested next step: {next_steps}")
+
+    return {
+        "occurrences": occurrences,
+        "ticket_path": ticket_path,
+        "response": "\n".join(response_lines),
+    }
 
 
 def routing_after_moderation(state: ChatState) -> str:
@@ -227,6 +425,8 @@ def build_graph():
     workflow.add_node("moderate", moderate_grievance)
     workflow.add_node("sanitize", sanitize_grievance)
     workflow.add_node("store", store_node)
+    workflow.add_node("summarize", summarize_grievance)
+    workflow.add_node("catalog", catalog_grievance)
 
     workflow.add_edge(START, "moderate")
     workflow.add_conditional_edges(
@@ -239,7 +439,9 @@ def build_graph():
         },
     )
     workflow.add_edge("sanitize", "moderate")
-    workflow.add_edge("store", END)
+    workflow.add_edge("store", "summarize")
+    workflow.add_edge("summarize", "catalog")
+    workflow.add_edge("catalog", END)
 
     return workflow.compile()
 

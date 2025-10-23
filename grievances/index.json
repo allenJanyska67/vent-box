@@ -1,0 +1,46 @@
+{
+  "topics": {
+    "build-pipeline-lambda-timeout": {
+      "summary": "Build pipeline failed due to a timeout error when initiating the lambda function.",
+      "next_steps": "Investigate the cause of the lambda startup timeout and adjust pipeline or function configuration as needed.",
+      "grievances": [
+        {
+          "file": "grievances/20251023-194544-level4.md",
+          "level": 4,
+          "message": "Build pipeline encountered a timeout error when starting the lambda function on Tuesday."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 4,
+      "ticket_path": ""
+    },
+    "build-pipeline-dll-file-error": {
+      "summary": "Build pipeline failed due to inability to open a required Microsoft .dll file.",
+      "next_steps": "Investigate the missing or inaccessible .dll file and update the build pipeline configuration accordingly.",
+      "grievances": [
+        {
+          "file": "grievances/20251023-194642-level2.md",
+          "level": 2,
+          "message": "Build pipeline encountered a failure on Wednesday due to an inability to open a Microsoft .dll file."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 2,
+      "ticket_path": ""
+    },
+    "main-py-code-readability-structure": {
+      "summary": "Main.py code lacks readability and needs structural improvements.",
+      "next_steps": "Review and refactor main.py to enhance code clarity and organization.",
+      "grievances": [
+        {
+          "file": "grievances/20251023-194930-level4.md",
+          "level": 4,
+          "message": "The code in main.py could be improved in terms of readability and structure."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 4,
+      "ticket_path": ""
+    }
+  }
+}
