@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "streamlit",
+    "langchain>=0.3.9",
+    "langchain-core>=0.3.59",
     "langgraph",
     "langgraph-cli[inmem]",
     "langchain-openai",
