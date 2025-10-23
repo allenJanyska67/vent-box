@@ -1,13 +1,15 @@
 [project]
 name = "chatbot-base"
 version = "0.1.0"
-description = "A blank canvas for building chatbots with langgraph"
+description = "A venting box that transforms your pain points into actionable items"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "streamlit",
     "langgraph",
+    "langgraph-cli[inmem]",
     "langchain-openai",
+    "python-dotenv",
 ]
 
 [tool.uv]

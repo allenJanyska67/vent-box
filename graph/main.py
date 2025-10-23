@@ -7,7 +7,8 @@ from operator import itemgetter
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-
+from dotenv import load_dotenv
+load_dotenv(".env")
 
 class ChatState(TypedDict):
     # Use add_messages reducer so nodes can append messages
