@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "streamlit",
     "langgraph",
+    "langgraph-cli[inmem]",
     "langchain-openai",
     "python-dotenv",
 ]
