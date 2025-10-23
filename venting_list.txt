@@ -1,0 +1,2 @@
+1. I hate updating dependencies
+2. It's too much work looking for all the markdown files that have documentation
