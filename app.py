@@ -1,95 +1,78 @@
+import json
+from json import JSONDecodeError
+from typing import Any, Dict
+
 import streamlit as st
-from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 
 from graph.main import graph
 
 
-st.set_page_config(page_title="Chat", page_icon="💬")
-st.title("Chat")
-st.caption("Powered by LangGraph + OpenAI (gpt-5-mini)")
+st.set_page_config(page_title="Grievance Intake", page_icon="📥")
+st.title("Grievance Intake")
+st.caption("Provide grievances as JSON. Messages are moderated and stored when approved.")
 
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []  # list[BaseMessage]
+def render_chat_log():
+    for entry in st.session_state.chat_log:
+        with st.chat_message(entry["role"]):
+            st.markdown(entry["content"])
 
 
-# Render existing conversation
-for msg in st.session_state.messages:
-    role = "assistant" if isinstance(msg, AIMessage) else "user"
-    with st.chat_message(role):
-        st.markdown(msg.content)
+def record_message(role: str, content: str) -> None:
+    st.session_state.chat_log.append({"role": role, "content": content})
 
 
-prompt = st.chat_input("Ask something...")
+def validate_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    errors = []
+    level = payload.get("level")
+    message = payload.get("message")
+
+    if not isinstance(level, int) or not 1 <= level <= 5:
+        errors.append("`level` must be an integer between 1 and 5.")
+
+    if not isinstance(message, str) or not message.strip():
+        errors.append("`message` must be a non-empty string.")
+
+    if errors:
+        raise ValueError(" ".join(errors))
+
+    return {"level": level, "message": message.strip()}
+
+
+if "chat_log" not in st.session_state:
+    st.session_state.chat_log = []
+
+with st.sidebar:
+    st.markdown(
+        "Example payload:\n"
+        "```json\n"
+        '{\n  "level": 3,\n  "message": "Build pipeline flakes on Mondays."\n}\n'
+        "```"
+    )
+
+prompt = st.chat_input('Enter grievance JSON e.g. {"level": 2, "message": "..."}')
 if prompt:
-    # Add user message
-    user_msg = HumanMessage(content=prompt)
-    st.session_state.messages.append(user_msg)
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    record_message("user", prompt)
+    try:
+        payload = json.loads(prompt)
+        if not isinstance(payload, dict):
+            raise ValueError("Payload must be a JSON object with `level` and `message`.")
+        cleaned = validate_payload(payload)
+    except (JSONDecodeError, ValueError) as exc:
+        record_message("assistant", f"Submission rejected: {exc}")
+    else:
+        result = graph.invoke({"request": cleaned})
+        response = result.get("response", "Workflow completed.")
 
-    # Run LangGraph; stream message updates and try to surface token chunks
-    with st.chat_message("assistant"):
-        state_in = {"messages": st.session_state.messages}
+        if result.get("decision") == "approved":
+            storage_path = result.get("storage_path")
+            if storage_path:
+                response += f"\nSaved to `{storage_path}`."
+        else:
+            reason = result.get("reason")
+            if reason:
+                response += f"\nReason: {reason}"
 
-        # Placeholders for indicator and streaming text
-        thinking = st.empty()
-        thinking.markdown("⌛ Thinking...")
-        output_placeholder = st.empty()
+        record_message("assistant", response)
 
-        streamed_any = False
-        collected = ""
-        final_text = None
-
-        # Primary: stream messages to capture output-tagged chunks
-        try:
-            for item in graph.stream(state_in, stream_mode="messages"):
-                if not isinstance(item, tuple) or len(item) != 2:
-                    continue
-                msg, meta = item
-                tags = (meta or {}).get("tags", []) or []
-                # Accumulate only output-tagged chunks
-                if isinstance(msg, AIMessageChunk) and "output" in tags:
-                    text = msg.content
-                    if isinstance(text, list):
-                        text = "".join(str(t) for t in text)
-                    if text:
-                        if not streamed_any:
-                            streamed_any = True
-                            thinking.empty()
-                        collected += text
-                        output_placeholder.markdown(collected)
-                elif isinstance(msg, AIMessage) and "output" in tags:
-                    # Final message (if chunks weren't emitted)
-                    final_text = msg.content or ""
-        except Exception:
-            # Fallback: stream updates and accumulate message chunks if present
-            for update in graph.stream(state_in, stream_mode="updates"):
-                msgs = update.get("messages")
-                if not msgs:
-                    continue
-                for m in msgs:
-                    if isinstance(m, AIMessageChunk):
-                        text = m.content
-                        if isinstance(text, list):
-                            text = "".join(str(t) for t in text)
-                        if text:
-                            if not streamed_any:
-                                streamed_any = True
-                                thinking.empty()
-                            collected += text
-                            output_placeholder.markdown(collected)
-                    elif isinstance(m, AIMessage):
-                        final_text = m.content or ""
-
-        # If no chunk streaming occurred, show the final message fallback
-        thinking.empty()
-        if not streamed_any:
-            if final_text is None:
-                final_text = ""
-            collected = final_text
-            output_placeholder.markdown(collected)
-
-        # Persist the AI message in the session
-        if collected:
-            st.session_state.messages.append(AIMessage(content=collected))
+render_chat_log()
