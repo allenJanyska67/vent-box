@@ -19,3 +19,6 @@ dev-dependencies = [
     "pytest>=8",
     "ruff>=0.5",
 ]
+
+[tool.setuptools.packages.find]
+include = ["graph*"]
