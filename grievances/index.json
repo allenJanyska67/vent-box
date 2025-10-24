@@ -55,6 +55,128 @@
       "occurrences": 1,
       "highest_level": 5,
       "ticket_path": ""
+    },
+    "build-pipeline-monday-instability": {
+      "summary": "Build pipeline is unstable on Mondays.",
+      "next_steps": "Investigate pipeline logs and recent changes for Monday-specific issues.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-170726-level3.md",
+          "level": 3,
+          "message": "Build pipeline experiences instability on Mondays."
+        },
+        {
+          "file": "grievances/20251024-171145-level3.md",
+          "level": 3,
+          "message": "Build pipeline experiences instability on Mondays."
+        }
+      ],
+      "occurrences": 2,
+      "highest_level": 3,
+      "ticket_path": "grievances/tickets/build-pipeline-monday-instability.md"
+    },
+    "build-pipeline-repo-timeout": {
+      "summary": "Build pipeline failed due to a repository pull timeout on October 24.",
+      "next_steps": "Investigate repository access and network issues causing pipeline timeouts.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-171005-level3.md",
+          "level": 3,
+          "message": "Build pipeline failed again this week. We noticed a timeout when pulling the repository. Today is Monday, October 24."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 3,
+      "ticket_path": ""
+    },
+    "build-pipeline-microsoft-dll-error": {
+      "summary": "Build pipeline failed due to a Microsoft .dll error.",
+      "next_steps": "Investigate the specific .dll error and update or reinstall the required Microsoft library.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-171055-level3.md",
+          "level": 3,
+          "message": "Build pipeline failed Monday with a Microsoft .dll error."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 3,
+      "ticket_path": ""
+    },
+    "main-py-organization": {
+      "summary": "The structure and organization of main.py are unsatisfactory.",
+      "next_steps": "Review and refactor main.py to improve its organization.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-171247-level2.md",
+          "level": 2,
+          "message": "I am unhappy with the organization of main.py."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 2,
+      "ticket_path": ""
+    },
+    "refactor-catalog-grievance-function": {
+      "summary": "The `catalog_grievance` function in main.py is too large and should be refactored for better organization.",
+      "next_steps": "Refactor `catalog_grievance` into smaller, modular functions.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-171332-level3.md",
+          "level": 3,
+          "message": "The function `catalog_grievance` in main.py should be broken up into multiple functions to improve organization."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 3,
+      "ticket_path": ""
+    },
+    "build-pipeline-timeout-error": {
+      "summary": "Build pipeline experienced a timeout error causing failure on Monday.",
+      "next_steps": "Investigate pipeline logs to identify the cause of the timeout and implement a fix.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-171629-level3.md",
+          "level": 3,
+          "message": "Build pipeline failed with a timeout error on Tuesday."
+        },
+        {
+          "file": "grievances/20251024-172940-level3.md",
+          "level": 3,
+          "message": "Build pipeline failed with a timeout error on Monday."
+        }
+      ],
+      "occurrences": 2,
+      "highest_level": 3,
+      "ticket_path": "grievances/tickets/build-pipeline-timeout-error.md"
+    },
+    "build-pipeline-timeout": {
+      "summary": "The build pipeline is experiencing timeouts during execution.",
+      "next_steps": "Investigate pipeline logs to identify and resolve the cause of the timeout.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-171703-level3.md",
+          "level": 3,
+          "message": "Build pipeline timeout"
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 3,
+      "ticket_path": ""
+    },
+    "ci-failure-azure-outage-timeout": {
+      "summary": "CI process failed due to a timeout coinciding with an Azure outage, impacting build reliability.",
+      "next_steps": "Evaluate and implement fallback mechanisms to reduce CI build disruptions during Azure outages.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-173822-level4.md",
+          "level": 4,
+          "message": "CI failed with a timeout error at the same time as an Azure outage. We should consider implementing a fallback behavior to prevent Azure outages from impacting our build process."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 4,
+      "ticket_path": ""
     }
   }
 }

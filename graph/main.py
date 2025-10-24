@@ -7,6 +7,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage, SystemMessage
+from .vector_store import find_similar_topic, upsert_grievance_embedding
 
 
 class ChatState(TypedDict, total=False):
@@ -23,6 +24,8 @@ class ChatState(TypedDict, total=False):
     occurrences: int
     ticket_path: str
     next_steps: str
+    similarity: float
+    matched_metadata: Dict[str, Any]
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -261,6 +264,8 @@ def summarize_grievance(state: ChatState) -> ChatState:
     summary = ""
     topic_key = ""
     next_steps = ""
+    match_similarity = 0.0
+    matched_metadata: Dict[str, Any] = {}
     if isinstance(content, str):
         try:
             parsed = json.loads(content)
@@ -274,15 +279,29 @@ def summarize_grievance(state: ChatState) -> ChatState:
     topic_key = normalize_topic_key(topic_key or summary)
     next_steps = next_steps or "Review and prioritise with the project owner."
 
+    match = find_similar_topic(sanitized)
+    if match:
+        match_topic = normalize_topic_key(str(match.get("topic_key", "")))
+        if match_topic:
+            topic_key = match_topic
+            match_similarity = float(match.get("similarity", 0.0))
+            matched_metadata = dict(match.get("metadata") or {})
+
     existing = state.get("response")
     response_lines = [existing] if existing else []
     response_lines.append(f"Summary: {summary}")
     response_lines.append(f"Topic key: {topic_key}")
+    if match_similarity:
+        response_lines.append(
+            f"Existing topic match similarity: {match_similarity:.2f}"
+        )
 
     return {
         "summary": summary,
         "topic_key": topic_key,
         "next_steps": next_steps,
+        "similarity": match_similarity,
+        "matched_metadata": matched_metadata,
         "response": "\n".join(response_lines),
     }
 
@@ -378,6 +397,19 @@ def catalog_grievance(state: ChatState) -> ChatState:
     INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     with INDEX_PATH.open("w", encoding="utf-8") as fh:
         json.dump(index_data, fh, indent=2, ensure_ascii=False)
+
+    document_id = storage_path or f"{topic_key}-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"
+    upsert_grievance_embedding(
+        document_id=document_id,
+        message=sanitized,
+        topic_key=topic_key,
+        summary=summary,
+        extra_metadata={
+            "level": level,
+            "storage_path": storage_path,
+            "ticket_path": ticket_path,
+        },
+    )
 
     response_lines = []
     if state.get("response"):
