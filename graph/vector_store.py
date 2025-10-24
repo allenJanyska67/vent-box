@@ -18,7 +18,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 GRIEVANCE_DIR = PROJECT_ROOT / "grievances"
 VECTOR_DB_DIR = GRIEVANCE_DIR / "vector_store"
 COLLECTION_NAME = "grievances"
-DEFAULT_SIMILARITY_THRESHOLD = 1.5
+
+ # cosine similarity ranges from -1 to 1 where 1 is the most similar and -1 is complete opposite
+ # according the the chroma documentation the equation they use is 1 - cosine similarity 
+ # which means the closer the cosine similarity is to 1, the more similar the two vectors are
+ # So if the distance function returns 0 then the cosine similarity is 1 and the two vectors are the most similar
+ # So the threshold needs to be low.
+DEFAULT_SIMILARITY_THRESHOLD = 0.5
 
 _collection = None
 
@@ -93,11 +99,16 @@ def find_similar_topic(
     best_distance = distances[best_index]
     best_metadata = metadatas[best_index]
 
+    print(f"best_distance: {best_distance}")
+    print(f"threshold: {threshold}")
+    print(f"best_metadata: {best_metadata}")
+
     # Chroma reports cosine distance, so convert to similarity.
-    similarity = 1.0 - float(best_distance)
     topic_key = (best_metadata or {}).get("topic_key")
 
-    if topic_key and similarity >= threshold:
+    similarity = 1.0 - float(best_distance)
+
+    if topic_key and best_distance <= threshold:
         return {
             "topic_key": str(topic_key),
             "similarity": similarity,

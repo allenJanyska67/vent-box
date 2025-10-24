@@ -177,6 +177,100 @@
       "occurrences": 1,
       "highest_level": 4,
       "ticket_path": ""
+    },
+    "build-pipeline-npm-timeout": {
+      "summary": "Build pipeline is timing out due to delays in pulling packages from NPM.",
+      "next_steps": "Audit the number and size of imported NPM packages to identify optimization opportunities.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-181507-level3.md",
+          "level": 3,
+          "message": "Build Pipeline timed out when pulling packages from NPM. We should investigate how many packages we are importing."
+        },
+        {
+          "file": "grievances/20251024-182423-level5.md",
+          "level": 5,
+          "message": "Build Pipeline timed out when pulling packages from NPM. We should investigate how many packages we are importing."
+        }
+      ],
+      "occurrences": 2,
+      "highest_level": 5,
+      "ticket_path": "grievances/tickets/build-pipeline-npm-timeout.md"
+    },
+    "pipeline-package-install-timeouts": {
+      "summary": "Pipeline experiences repeated timeouts during package installation across several branches.",
+      "next_steps": "Investigate package installation logs and network connectivity to identify root cause of timeouts.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-181612-level5.md",
+          "level": 5,
+          "message": "Pipeline is consistently timing out on multiple branches when installing packages."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 5,
+      "ticket_path": ""
+    },
+    "npm-install-timeout-build-pipeline": {
+      "summary": "Build pipeline fails due to NPM package installation timeout, possibly related to authorization issues.",
+      "next_steps": "Verify NPM registry authorization credentials and check package availability.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-182346-level5.md",
+          "level": 5,
+          "message": "Build pipeline failed while installing NPM packages. Tried deleting node_modules and error persisted. The error is a timeout saying the package might not exist. May need to update authorization."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 5,
+      "ticket_path": ""
+    },
+    "long-install-time-warning": {
+      "summary": "Package installation failed due to timeout, possibly caused by exceeding system limits after adding a new package.",
+      "next_steps": "Review recent package additions and system limits to identify and resolve the cause of the timeout.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-182909-level2.md",
+          "level": 2,
+          "message": "Package installation succeeded, but a warning about long install times was observed. It is recommended to investigate this to prevent potential timeouts."
+        },
+        {
+          "file": "grievances/20251024-183240-level3.md",
+          "level": 3,
+          "message": "Package installation timed out after multiple warnings. We recently added a package that may have pushed us beyond a limit."
+        }
+      ],
+      "occurrences": 2,
+      "highest_level": 3,
+      "ticket_path": "grievances/tickets/long-install-time-warning.md"
+    },
+    "ci-long-package-install-times": {
+      "summary": "CI is experiencing unusually long package installation times.",
+      "next_steps": "Analyze CI logs to identify causes of slow package installations.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-182954-level3.md",
+          "level": 3,
+          "message": "CI reported long package install times. We should investigate."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 3,
+      "ticket_path": ""
+    },
+    "package-installation-timeout-hotel-wifi": {
+      "summary": "Package installation failed due to timeout on hotel wifi.",
+      "next_steps": "Test installation on a stable network or provide offline installation instructions.",
+      "grievances": [
+        {
+          "file": "grievances/20251024-183319-level5.md",
+          "level": 5,
+          "message": "Package installation timed out when on hotel wifi."
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 5,
+      "ticket_path": ""
     }
   }
 }
