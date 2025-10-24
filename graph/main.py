@@ -16,6 +16,8 @@ class ChatState(TypedDict, total=False):
     reason: str
     sanitized_message: str
     storage_path: str
+    raw_message: str
+    raw_storage_path: str
     response: str
     attempts: int
     next_action: str
@@ -30,6 +32,7 @@ class ChatState(TypedDict, total=False):
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 GRIEVANCE_DIR = PROJECT_ROOT / "grievances"
+RAW_GRIEVANCE_DIR = GRIEVANCE_DIR / "raw_submissions"
 TICKETS_DIR = GRIEVANCE_DIR / "tickets"
 INDEX_PATH = GRIEVANCE_DIR / "index.json"
 MAX_SANITIZE_ATTEMPTS = 1
@@ -99,6 +102,7 @@ def moderate_grievance(state: ChatState) -> ChatState:
     level = request.get("level")
     raw_message = request.get("message", "")
     attempts = state.get("attempts", 0)
+    original_message = state.get("raw_message") or raw_message
 
     if not isinstance(level, int) or not 1 <= level <= 5:
         reason = "Level must be an integer between 1 and 5."
@@ -109,6 +113,7 @@ def moderate_grievance(state: ChatState) -> ChatState:
             "response": f"Submission rejected: {reason}",
             "attempts": attempts,
             "next_action": "end",
+            "raw_message": original_message,
         }
 
     if not isinstance(raw_message, str) or not raw_message.strip():
@@ -120,6 +125,7 @@ def moderate_grievance(state: ChatState) -> ChatState:
             "response": f"Submission rejected: {reason}",
             "attempts": attempts,
             "next_action": "end",
+            "raw_message": original_message,
         }
 
     prompt = (
@@ -175,6 +181,7 @@ def moderate_grievance(state: ChatState) -> ChatState:
             "response": " ".join(response_parts),
             "attempts": attempts,
             "next_action": next_action,
+            "raw_message": original_message,
         }
 
     sanitized_message = sanitized_message or raw_message.strip()
@@ -184,6 +191,7 @@ def moderate_grievance(state: ChatState) -> ChatState:
         "sanitized_message": sanitized_message,
         "response": "Message approved. Preparing to store the grievance.",
         "attempts": attempts,
+        "raw_message": original_message,
         "next_action": "store",
     }
 
@@ -334,6 +342,36 @@ def save_grievance_tool(level: int, sanitized_message: str) -> str:
     return str(relative_path)
 
 
+def save_raw_grievance(raw_message: str, sanitized_relative_path: str, level: int) -> str:
+    """
+    Save the raw grievance submission to a gitignored directory.
+    """
+    if not isinstance(raw_message, str):
+        return ""
+    if not raw_message.strip():
+        return ""
+
+    RAW_GRIEVANCE_DIR.mkdir(parents=True, exist_ok=True)
+    base_name = Path(sanitized_relative_path).stem if sanitized_relative_path else ""
+    if not base_name:
+        base_name = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    raw_filename = f"{base_name}-raw.txt"
+    raw_file = RAW_GRIEVANCE_DIR / raw_filename
+
+    content_lines = [
+        "# Raw Grievance Submission",
+        "",
+        f"- Level: {level}",
+        f"- Sanitized File: {sanitized_relative_path}",
+        "",
+        raw_message,
+        "",
+    ]
+
+    raw_file.write_text("\n".join(content_lines), encoding="utf-8")
+    return str(raw_file.relative_to(PROJECT_ROOT))
+
+
 def catalog_grievance(state: ChatState) -> ChatState:
     request = state.get("request") or {}
     level = int(request.get("level", 1))
@@ -344,6 +382,7 @@ def catalog_grievance(state: ChatState) -> ChatState:
     topic_key = normalize_topic_key(topic_key)
     next_steps = state.get("next_steps", "").strip()
     storage_path = state.get("storage_path", "")
+    raw_storage_path = state.get("raw_storage_path", "")
 
     index_data: Dict[str, Any] = {"topics": {}}
     if INDEX_PATH.exists():
@@ -358,13 +397,14 @@ def catalog_grievance(state: ChatState) -> ChatState:
 
     grievances = entry.get("grievances", [])
     if storage_path and not any(item.get("file") == storage_path for item in grievances):
-        grievances.append(
-            {
-                "file": storage_path,
-                "level": level,
-                "message": sanitized,
-            }
-        )
+        entry_data = {
+            "file": storage_path,
+            "level": level,
+            "message": sanitized,
+        }
+        if raw_storage_path:
+            entry_data["raw_file"] = raw_storage_path
+        grievances.append(entry_data)
 
     occurrences = len(grievances)
     highest_level = max([level] + [item.get("level", 0) for item in grievances])
@@ -407,6 +447,7 @@ def catalog_grievance(state: ChatState) -> ChatState:
         extra_metadata={
             "level": level,
             "storage_path": storage_path,
+            "raw_storage_path": raw_storage_path,
             "ticket_path": ticket_path,
         },
     )
@@ -446,9 +487,15 @@ def store_node(state: ChatState) -> ChatState:
     relative_path = save_grievance_tool.invoke(
         {"level": level, "sanitized_message": sanitized}
     )
+    raw_message = state.get("raw_message", "")
+    raw_storage_path = save_raw_grievance(raw_message, relative_path, level)
+    response_lines = [f"Grievance saved to {relative_path}"]
+    if raw_storage_path:
+        response_lines.append(f"Raw submission stored at {raw_storage_path}")
     return {
         "storage_path": relative_path,
-        "response": f"Grievance saved to {relative_path}",
+        "raw_storage_path": raw_storage_path,
+        "response": "\n".join(response_lines),
     }
 
 

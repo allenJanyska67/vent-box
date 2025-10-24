@@ -50,3 +50,6 @@ htmlcov/
 
 # direnv
 .direnv/
+
+# Raw grievance submissions
+grievances/raw_submissions/

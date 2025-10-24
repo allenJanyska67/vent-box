@@ -99,10 +99,6 @@ def find_similar_topic(
     best_distance = distances[best_index]
     best_metadata = metadatas[best_index]
 
-    print(f"best_distance: {best_distance}")
-    print(f"threshold: {threshold}")
-    print(f"best_metadata: {best_metadata}")
-
     # Chroma reports cosine distance, so convert to similarity.
     topic_key = (best_metadata or {}).get("topic_key")
 
