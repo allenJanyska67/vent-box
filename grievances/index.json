@@ -292,6 +292,121 @@
       "occurrences": 2,
       "highest_level": 5,
       "ticket_path": "grievances/tickets/documentation-underutilization-organization.md"
+    },
+    "clear-unused-script-format": {
+      "summary": "The clear unused script is confusing and should be rewritten as a proper Bash or Python script.",
+      "next_steps": "Decide on the intended language and update the script accordingly.",
+      "grievances": [
+        {
+          "file": "grievances/20251025-143812-level2.md",
+          "level": 2,
+          "message": "The clear unused script is unintuitive. I did not expect to need Python for it. We should make it an actual Bash script or change it to a .py file.",
+          "raw_file": "grievances/raw_submissions/20251025-143812-level2-raw.txt"
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 2,
+      "ticket_path": ""
+    },
+    "coffee-machine-breakdown": {
+      "summary": "The coffee machine malfunctioned this morning, causing dissatisfaction.",
+      "next_steps": "Arrange for immediate repair or replacement of the coffee machine.",
+      "grievances": [
+        {
+          "file": "grievances/20251025-155427-level5.md",
+          "level": 5,
+          "message": "The coffee machine broke this morning and that is unacceptable.",
+          "raw_file": "grievances/raw_submissions/20251025-155427-level5-raw.txt"
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 5,
+      "ticket_path": "",
+      "ticket_threshold": 2
+    },
+    "coffee-machine-still-broken": {
+      "summary": "The coffee machine remains broken despite previous repair attempts.",
+      "next_steps": "Schedule a technician to inspect and repair the coffee machine.",
+      "grievances": [
+        {
+          "file": "grievances/20251025-155457-level5.md",
+          "level": 5,
+          "message": "The coffee machine is still broken. I thought we had fixed that.",
+          "raw_file": "grievances/raw_submissions/20251025-155457-level5-raw.txt"
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 5,
+      "ticket_path": "",
+      "ticket_threshold": 2
+    },
+    "coffee-machine-broken": {
+      "summary": "The coffee machine remains out of order.",
+      "next_steps": "Schedule repair or replacement of the coffee machine.",
+      "grievances": [
+        {
+          "file": "grievances/20251025-155804-level5.md",
+          "level": 5,
+          "message": "The coffee machine is still broken.",
+          "raw_file": "grievances/raw_submissions/20251025-155804-level5-raw.txt"
+        },
+        {
+          "file": "grievances/20251025-160327-level5.md",
+          "level": 5,
+          "message": "The coffee machine is still broken.",
+          "raw_file": "grievances/raw_submissions/20251025-160327-level5-raw.txt"
+        },
+        {
+          "file": "grievances/20251025-160359-level5.md",
+          "level": 5,
+          "message": "The coffee machine is still broken.",
+          "raw_file": "grievances/raw_submissions/20251025-160359-level5-raw.txt"
+        },
+        {
+          "file": "grievances/20251025-160510-level5.md",
+          "level": 5,
+          "message": "The coffee machine is still broken.",
+          "raw_file": "grievances/raw_submissions/20251025-160510-level5-raw.txt"
+        },
+        {
+          "file": "grievances/20251025-160541-level5.md",
+          "level": 5,
+          "message": "The coffee machine is still broken.",
+          "raw_file": "grievances/raw_submissions/20251025-160541-level5-raw.txt"
+        },
+        {
+          "file": "grievances/20251025-160607-level5.md",
+          "level": 5,
+          "message": "The coffee machine is still broken.",
+          "raw_file": "grievances/raw_submissions/20251025-160607-level5-raw.txt"
+        }
+      ],
+      "occurrences": 6,
+      "highest_level": 5,
+      "ticket_path": "grievances/tickets/coffee-machine-broken.md",
+      "ticket_threshold": 2
+    },
+    "silent-import-error-production-failure": {
+      "summary": "A silent import error made the vector database inaccessible.",
+      "next_steps": "Investigate import logs and error handling to identify and resolve the cause of the database inaccessibility.",
+      "grievances": [
+        {
+          "file": "grievances/20251025-162159-level5.md",
+          "level": 5,
+          "message": "Silent import error led to a feature not working in production.",
+          "raw_file": "grievances/raw_submissions/20251025-162159-level5-raw.txt"
+        },
+        {
+          "file": "grievances/20251025-162248-level5.md",
+          "level": 5,
+          "message": "A silent import error occurred today, causing the vector database to be inaccessible.",
+          "raw_file": "grievances/raw_submissions/20251025-162248-level5-raw.txt"
+        }
+      ],
+      "occurrences": 2,
+      "highest_level": 5,
+      "ticket_path": "grievances/tickets/silent-import-error-production-failure.md",
+      "ticket_threshold": 2
     }
   }
 }
