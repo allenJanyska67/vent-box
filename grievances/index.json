@@ -273,8 +273,8 @@
       "ticket_path": ""
     },
     "documentation-underutilization-organization": {
-      "summary": "User was unable to locate needed information in the documentation.",
-      "next_steps": "Review and improve documentation organization and search functionality.",
+      "summary": "Frequent changes in domain understanding make it hard to maintain accurate documentation.",
+      "next_steps": "Establish a regular review process to update documentation as domain knowledge evolves.",
       "grievances": [
         {
           "file": "grievances/20251024-184707-level3.md",
@@ -287,11 +287,18 @@
           "level": 5,
           "message": "Tried using our documentation today and couldn't find what I was looking for.",
           "raw_file": "grievances/raw_submissions/20251024-184804-level5-raw.txt"
+        },
+        {
+          "file": "grievances/20251025-175435-level3.md",
+          "level": 3,
+          "message": "It is difficult to keep domain documentation up to date due to our shifting understanding of the domain.",
+          "raw_file": "grievances/raw_submissions/20251025-175435-level3-raw.txt"
         }
       ],
-      "occurrences": 2,
+      "occurrences": 3,
       "highest_level": 5,
-      "ticket_path": "grievances/tickets/documentation-underutilization-organization.md"
+      "ticket_path": "grievances/tickets/documentation-underutilization-organization.md",
+      "ticket_threshold": 2
     },
     "clear-unused-script-format": {
       "summary": "The clear unused script is confusing and should be rewritten as a proper Bash or Python script.",
@@ -407,6 +414,22 @@
       "highest_level": 5,
       "ticket_path": "grievances/tickets/silent-import-error-production-failure.md",
       "ticket_threshold": 2
+    },
+    "office-odor-microwaved-fish": {
+      "summary": "Microwaving fish in the office creates strong odors that disrupt a comfortable work environment.",
+      "next_steps": "Request management to implement guidelines on food with strong odors in shared office spaces.",
+      "grievances": [
+        {
+          "file": "grievances/20251025-175630-level5.md",
+          "level": 5,
+          "message": "A colleague frequently microwaves fish in the office, which creates a strong odor and makes it difficult to work comfortably. I am requesting that this issue be addressed to improve the work environment.",
+          "raw_file": "grievances/raw_submissions/20251025-175630-level5-raw.txt"
+        }
+      ],
+      "occurrences": 1,
+      "highest_level": 5,
+      "ticket_path": "grievances/tickets/office-odor-microwaved-fish.md",
+      "ticket_threshold": 1
     }
   }
 }
