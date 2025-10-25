@@ -9,6 +9,7 @@ try:
     from chromadb import PersistentClient
     from chromadb.utils import embedding_functions
 except ImportError:  # pragma: no cover - optional dependency
+    print(f"ImportError: chromadb, PersistentClient, or embedding_functions is not found")
     chromadb = None  # type: ignore
     PersistentClient = None  # type: ignore
     embedding_functions = None  # type: ignore
@@ -24,7 +25,7 @@ COLLECTION_NAME = "grievances"
  # which means the closer the cosine similarity is to 1, the more similar the two vectors are
  # So if the distance function returns 0 then the cosine similarity is 1 and the two vectors are the most similar
  # So the threshold needs to be low.
-DEFAULT_SIMILARITY_THRESHOLD = 0.5
+DEFAULT_DISTANCE_THRESHOLD = 0.5
 
 _collection = None
 
@@ -32,13 +33,16 @@ _collection = None
 def _resolve_collection():
     global _collection
     if _collection is not None:
+        print(f"Collection is not None")
         return _collection
 
     if chromadb is None or PersistentClient is None or embedding_functions is None:
+        print(f"Chroma, PersistentClient, or embedding_functions is None")
         return None
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
+        print(f"No API key found")
         return None
 
     model_name = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
@@ -46,6 +50,7 @@ def _resolve_collection():
     try:
         VECTOR_DB_DIR.mkdir(parents=True, exist_ok=True)
     except OSError:
+        print(f"Error creating vector database directory")
         return None
 
     try:
@@ -67,18 +72,20 @@ def _resolve_collection():
 def find_similar_topic(
     message: str,
     *,
-    threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
+    threshold: float = DEFAULT_DISTANCE_THRESHOLD,
     max_results: int = 3,
 ) -> Optional[Dict[str, Any]]:
     """
     Return the metadata for the closest grievance whose cosine similarity meets the threshold.
     """
+    print(f"Finding similar topic for message: {message}")
     text = (message or "").strip()
     if not text:
         return None
 
     collection = _resolve_collection()
     if collection is None:
+        print(f"Collection is None")
         return None
 
     try:
@@ -88,11 +95,13 @@ def find_similar_topic(
             include=["distances", "metadatas"],
         )
     except Exception:
+        print(f"Error finding similar topic")
         return None
 
     distances = (results.get("distances") or [[]])[0]
     metadatas = (results.get("metadatas") or [[]])[0]
     if not distances or not metadatas:
+        print(f"No distances or metadatas found")
         return None
 
     best_index = 0
@@ -103,6 +112,8 @@ def find_similar_topic(
     topic_key = (best_metadata or {}).get("topic_key")
 
     similarity = 1.0 - float(best_distance)
+
+    print(f"Topic key: {topic_key}, Best distance: {best_distance}, Similarity: {similarity}")
 
     if topic_key and best_distance <= threshold:
         return {

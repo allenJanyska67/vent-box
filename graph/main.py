@@ -35,7 +35,9 @@ GRIEVANCE_DIR = PROJECT_ROOT / "grievances"
 RAW_GRIEVANCE_DIR = GRIEVANCE_DIR / "raw_submissions"
 TICKETS_DIR = GRIEVANCE_DIR / "tickets"
 INDEX_PATH = GRIEVANCE_DIR / "index.json"
-MAX_SANITIZE_ATTEMPTS = 1
+MAX_SANITIZE_ATTEMPTS = 2
+MIN_TICKET_THRESHOLD = 1
+MAX_TICKET_THRESHOLD = 5
 
 # Dedicated moderation model; streaming unnecessary for this workflow.
 moderation_llm = ChatOpenAI(model="gpt-4.1", temperature=0).with_config(
@@ -95,6 +97,32 @@ def render_ticket_content(topic_key: str, entry: Dict[str, Any]) -> str:
 
     lines.append("")
     return "\n".join(lines)
+
+
+def calculate_ticket_threshold(grievances: list[Dict[str, Any]]) -> int:
+    """Derive how many reports are needed before creating a ticket."""
+    if not grievances:
+        return MAX_TICKET_THRESHOLD
+
+    levels: list[int] = []
+    for item in grievances:
+        try:
+            level = int(item.get("level", 1))
+        except (TypeError, ValueError):
+            continue
+        if 1 <= level <= 5:
+            levels.append(level)
+    if not levels:
+        return MAX_TICKET_THRESHOLD
+
+    avg_level = sum(levels) / len(levels)
+    normalized = (avg_level - 1) / 4  # maps 1-5 → 0-1
+    threshold_span = MAX_TICKET_THRESHOLD - MIN_TICKET_THRESHOLD
+    dynamic_threshold = MAX_TICKET_THRESHOLD - (normalized * threshold_span)
+    return max(
+        MIN_TICKET_THRESHOLD,
+        min(MAX_TICKET_THRESHOLD, round(dynamic_threshold)),
+    )
 
 
 def moderate_grievance(state: ChatState) -> ChatState:
@@ -288,6 +316,7 @@ def summarize_grievance(state: ChatState) -> ChatState:
     next_steps = next_steps or "Review and prioritise with the project owner."
 
     match = find_similar_topic(sanitized)
+
     if match:
         match_topic = normalize_topic_key(str(match.get("topic_key", "")))
         if match_topic:
@@ -420,9 +449,10 @@ def catalog_grievance(state: ChatState) -> ChatState:
     )
 
     ticket_path = entry.get("ticket_path", "")
+    ticket_threshold = calculate_ticket_threshold(grievances)
     TICKETS_DIR.mkdir(parents=True, exist_ok=True)
 
-    if occurrences >= 2:
+    if occurrences >= ticket_threshold:
         ticket_filename = f"{topic_key}.md"
         ticket_file = TICKETS_DIR / ticket_filename
         ticket_content = render_ticket_content(topic_key, entry)
@@ -431,6 +461,7 @@ def catalog_grievance(state: ChatState) -> ChatState:
         entry["ticket_path"] = ticket_path
     else:
         entry.setdefault("ticket_path", "")
+    entry["ticket_threshold"] = ticket_threshold
 
     topics[topic_key] = entry
 
@@ -455,11 +486,15 @@ def catalog_grievance(state: ChatState) -> ChatState:
     response_lines = []
     if state.get("response"):
         response_lines.append(state["response"])
-    response_lines.append(f"Occurrences for {topic_key}: {occurrences}")
-    if occurrences >= 2:
+    response_lines.append(
+        f"Occurrences for {topic_key}: {occurrences} (threshold {ticket_threshold})"
+    )
+    if occurrences >= ticket_threshold:
         response_lines.append(f"Recurring issue tracked at `{ticket_path}`.")
     else:
-        response_lines.append("First report logged; monitoring for recurrence.")
+        response_lines.append(
+            "Report logged; monitoring until it meets the escalation threshold."
+        )
     if next_steps:
         response_lines.append(f"Suggested next step: {next_steps}")
 
